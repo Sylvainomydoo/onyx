@@ -37,7 +37,7 @@ import {
 import { SiBookstack } from "react-icons/si";
 import Image, { StaticImageData } from "next/image";
 import jiraSVG from "../../../public/Jira.svg";
-import odooPNG from "../../../public/odoo.png";
+import odooPNG from "../../../public/odooPNG.png";
 import confluenceSVG from "../../../public/Confluence.svg";
 import deepseekSVG from "../../../public/Deepseek.svg";
 import openAISVG from "../../../public/Openai.svg";
