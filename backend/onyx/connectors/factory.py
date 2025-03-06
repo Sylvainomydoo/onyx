@@ -60,6 +60,7 @@ from onyx.db.credentials import backend_update_credential_json
 from onyx.db.credentials import fetch_credential_by_id
 from onyx.db.models import Credential
 from shared_configs.contextvars import get_current_tenant_id
+from onyx.connectors.odoo.connector import OdooConnector
 
 
 class ConnectorMissingException(Exception):
@@ -78,6 +79,7 @@ def identify_connector_class(
             InputType.SLIM_RETRIEVAL: SlackConnector,
         },
         DocumentSource.GITHUB: GithubConnector,
+        DocumentSource.ODOO: OdooConnector,
         DocumentSource.GMAIL: GmailConnector,
         DocumentSource.GITLAB: GitlabConnector,
         DocumentSource.GITBOOK: GitbookConnector,

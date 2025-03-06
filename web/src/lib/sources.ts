@@ -7,6 +7,7 @@ import {
   Document360Icon,
   DropboxIcon,
   FileIcon,
+  OdooIcon,
   GithubIcon,
   GitlabIcon,
   GlobeIcon,
@@ -127,6 +128,12 @@ export const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Jira",
     category: SourceCategory.ProjectManagement,
     docs: "https://docs.onyx.app/connectors/jira",
+  },
+  odoo: {
+    icon: OdooIcon,
+    displayName: "Odoo",
+    category: SourceCategory.ProjectManagement,
+    docs: "https://docs.onyx.app/connectors/odoo"
   },
   notion: {
     icon: NotionIcon,

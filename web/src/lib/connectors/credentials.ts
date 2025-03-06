@@ -45,6 +45,12 @@ export interface BookstackCredentialJson {
   bookstack_api_token_secret: string;
 }
 
+export interface OdooCredentialJson {
+  odoo_base_url: string;
+  odoo_db: string;
+  odoo_api_key: string;
+}
+
 export interface ConfluenceCredentialJson {
   confluence_username: string;
   confluence_access_token: string;
@@ -237,6 +243,11 @@ export const credentialTemplates: Record<ValidSources, any> = {
     bookstack_api_token_id: "",
     bookstack_api_token_secret: "",
   } as BookstackCredentialJson,
+  odoo: {
+    odoo_base_url: "",
+    odoo_db: "",
+    odoo_api_key: "",
+  } as OdooCredentialJson,
   confluence: {
     confluence_username: "",
     confluence_access_token: "",
@@ -365,6 +376,11 @@ export const credentialDisplayNames: Record<string, string> = {
   bookstack_base_url: "Bookstack Base URL",
   bookstack_api_token_id: "Bookstack API Token ID",
   bookstack_api_token_secret: "Bookstack API Token Secret",
+
+  // Odoo
+  odoo_base_url: "Odoo Base URL",
+  odoo_db: "Odoo Database Name",
+  odoo_api_key: "Odoo API Key",
 
   // Confluence
   confluence_username: "Confluence Username",

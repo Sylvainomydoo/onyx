@@ -390,6 +390,33 @@ export const connectorConfigs: Record<
     values: [],
     advanced_values: [],
   },
+  odoo: {
+    description: "Configure Odoo connector",
+    values: [
+      {
+        type: "text",
+        label: "Odoo Base URL",
+        name: "odoo_base_url",
+        optional: false,
+        query: "Enter the Odoo instance URL (e.g. https://mycompany.odoo.com)",
+      },
+      {
+        type: "text",
+        label: "Odoo Database Name",
+        name: "odoo_db",
+        optional: false,
+        query: "Enter your Odoo database name",
+      },
+      {
+        type: "text",
+        label: "Odoo API Key",
+        name: "odoo_api_key",
+        optional: false,
+        query: "Enter your Odoo API Key",
+      },
+    ],
+    advanced_values: [],
+  },
   confluence: {
     description: "Configure Confluence connector",
     initialConnectorName: "cloud_name",

@@ -134,6 +134,7 @@ class DocumentSource(str, Enum):
     GMAIL = "gmail"
     REQUESTTRACKER = "requesttracker"
     GITHUB = "github"
+    ODOO = "odoo"
     GITBOOK = "gitbook"
     GITLAB = "gitlab"
     GURU = "guru"

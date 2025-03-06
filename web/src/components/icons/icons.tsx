@@ -37,6 +37,7 @@ import {
 import { SiBookstack } from "react-icons/si";
 import Image, { StaticImageData } from "next/image";
 import jiraSVG from "../../../public/Jira.svg";
+import odooPNG from "../../../public/odoo.png";
 import confluenceSVG from "../../../public/Confluence.svg";
 import deepseekSVG from "../../../public/Deepseek.svg";
 import openAISVG from "../../../public/Openai.svg";
@@ -1123,6 +1124,13 @@ export const JiraIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => (
   <LogoIcon size={size + 4} className={`${className} -m-0.5`} src={jiraSVG} />
+);
+
+export const OdooIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <LogoIcon size={size + 4} className={`${className} -m-0.5`} src={odooPNG} />
 );
 
 export const ZulipIcon = ({
