@@ -287,10 +287,10 @@ class GithubConnector(LoadConnector, PollConnector):
 
             # --- AJOUT DU NOUVEAU BLOC POUR LES FICHIERS .py ---
             logger.info(f"Fetching .py files for repo: {repo.name}")
-            py_documents = _fetch_py_files(repo)
+            all_documents = _fetch_all_files(repo)
 
             # Éviter de renvoyer des listes trop grosses en un seul bloc
-            for mini_batch in batch_generator(py_documents, batch_size=self.batch_size):
+            for mini_batch in batch_generator(all_documents, batch_size=self.batch_size):
                 yield mini_batch
 
     def load_from_state(self) -> GenerateDocumentsOutput:
