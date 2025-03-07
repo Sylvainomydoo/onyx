@@ -54,6 +54,7 @@ class OdooConnector(LoadConnector, PollConnector):
         helpdesk_include_emails: bool = False,
         helpdesk_include_notes: bool = False,
         odoo_page_size: int = 100,
+        batch_size: int = 20,
     ) -> None:
         # On stocke ces infos pour la logique interne
         self.include_project_module = include_project_module
@@ -70,6 +71,8 @@ class OdooConnector(LoadConnector, PollConnector):
 
         self.odoo_page_size = odoo_page_size
 
+        self.batch_size = batch_size
+
         # Credentials: On les chargera dans load_credentials
         self.odoo_url: str | None = None
         self.odoo_db: str | None = None
@@ -81,7 +84,10 @@ class OdooConnector(LoadConnector, PollConnector):
     # ------------------------------------------------
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         # Récupère les champs d’authentification
-        if "odoo_base_url" not in credentials or "odoo_db" not in credentials or "odoo_api_key" not in credentials:
+        if ("odoo_base_url" not in credentials 
+            or "odoo_db" not in credentials
+            or "odoo_login" not in credentials
+            or "odoo_api_key" not in credentials):
             raise ConnectorMissingCredentialError("Missing Odoo credentials")
 
         self.odoo_url = credentials["odoo_base_url"]
@@ -135,11 +141,11 @@ class OdooConnector(LoadConnector, PollConnector):
         self._authenticate()
 
         all_docs: List[Document] = []
-        if self.include_tickets:
+        if self.include_helpdesk_module:
             docs_tickets = self._fetch_tickets_paginated(since=start_dt, until=end_dt)
             all_docs.extend(docs_tickets)
 
-        if self.include_tasks:
+        if self.include_project_module:
             docs_tasks = self._fetch_tasks_paginated(since=start_dt, until=end_dt)
             all_docs.extend(docs_tasks)
 
@@ -407,12 +413,12 @@ if __name__ == "__main__":
     import time
 
     connector = OdooConnector(
-        odoo_url="https://mycompany.odoo.com",
-        odoo_db="mycompany-db",
         batch_size=5,
-        include_tickets=True,
-        include_tasks=True,
-        odoo_page_size=50,  # example: each search/read limited to 50
+        include_helpdesk_module=True,
+        helpdesk_include_tasks=True,
+        include_project_module=True,
+        project_include_tasks=True,
+        odoo_page_size=50,
     )
     connector.load_credentials({
         "odoo_login": "user@mycompany.com",
