@@ -19,9 +19,11 @@ from onyx.connectors.interfaces import (
     SecondsSinceUnixEpoch
 )
 from onyx.connectors.exceptions import (
-    ConnectorMissingCredentialError,
     ConnectorValidationError,
     UnexpectedValidationError
+)
+from onyx.connectors.models import (
+    ConnectorMissingCredentialError
 )
 from onyx.connectors.models import Document, Section
 from onyx.configs.constants import DocumentSource
@@ -41,93 +43,79 @@ class OdooConnector(LoadConnector, PollConnector):
 
     def __init__(
         self,
-        odoo_url: Optional[str] = None,
-        odoo_db: Optional[str] = None,
-        batch_size: int = 20,
-        include_tickets: bool = True,
-        include_tasks: bool = True,
-        # Contrôle pagination côté Odoo
+        include_project_module: bool = False,
+        project_include_tasks: bool = False,
+        project_include_descriptions: bool = False,
+        project_include_emails: bool = False,
+        project_include_notes: bool = False,
+        include_helpdesk_module: bool = False,
+        helpdesk_include_tasks: bool = False,
+        helpdesk_include_descriptions: bool = False,
+        helpdesk_include_emails: bool = False,
+        helpdesk_include_notes: bool = False,
         odoo_page_size: int = 100,
     ) -> None:
-        """
-        :param odoo_url: e.g. "https://mycompany.odoo.com"
-        :param odoo_db: The Odoo database name, e.g. "mycompany-main-db"
-        :param batch_size: Number of Document objects per batch (Onyx-level batching)
-        :param include_tickets: Whether to fetch helpdesk tickets
-        :param include_tasks: Whether to fetch project tasks
-        :param odoo_page_size: How many records to fetch at once from Odoo (limit) to avoid large volume issues
-        """
-        self.odoo_url = odoo_url
-        self.odoo_db = odoo_db
-        self.batch_size = batch_size
-        self.include_tickets = include_tickets
-        self.include_tasks = include_tasks
+        # On stocke ces infos pour la logique interne
+        self.include_project_module = include_project_module
+        self.project_include_tasks = project_include_tasks
+        self.project_include_descriptions = project_include_descriptions
+        self.project_include_emails = project_include_emails
+        self.project_include_notes = project_include_notes
+
+        self.include_helpdesk_module = include_helpdesk_module
+        self.helpdesk_include_tasks = helpdesk_include_tasks
+        self.helpdesk_include_descriptions = helpdesk_include_descriptions
+        self.helpdesk_include_emails = helpdesk_include_emails
+        self.helpdesk_include_notes = helpdesk_include_notes
+
         self.odoo_page_size = odoo_page_size
 
-        self.odoo_login: str | None = None
-        self.odoo_password: str | None = None
-        self.odoo_uid: int | None = None  # returned by authenticate
+        # Credentials: On les chargera dans load_credentials
+        self.odoo_url: str | None = None
+        self.odoo_db: str | None = None
+        self.odoo_api_key: str | None = None
+        self.odoo_uid: int | None = None
 
     # ------------------------------------------------
     # CREDENTIALS + VALIDATION
     # ------------------------------------------------
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        """
-        Expects something like:
-        {
-          "odoo_login": "john@company.com",
-          "odoo_password": "SECRET"
-        }
-        """
-        if "odoo_login" not in credentials or "odoo_password" not in credentials:
-            raise ConnectorMissingCredentialError(
-                "Missing 'odoo_login' or 'odoo_password' in credentials."
-            )
+        # Récupère les champs d’authentification
+        if "odoo_base_url" not in credentials or "odoo_db" not in credentials or "odoo_api_key" not in credentials:
+            raise ConnectorMissingCredentialError("Missing Odoo credentials")
 
+        self.odoo_url = credentials["odoo_base_url"]
+        self.odoo_db = credentials["odoo_db"]
         self.odoo_login = credentials["odoo_login"]
-        self.odoo_password = credentials["odoo_password"]
+        self.odoo_api_key = credentials["odoo_api_key"]
 
-        logger.info("Odoo credentials loaded.")
         return None
 
     def validate_connector_settings(self) -> None:
-        """
-        Ensures odoo_url, odoo_db, login, password are present
-        and attempts an authentication to Odoo.
-        """
-        if not self.odoo_url:
-            raise ConnectorValidationError("Missing 'odoo_url'.")
-        if not self.odoo_db:
-            raise ConnectorValidationError("Missing 'odoo_db'.")
-        if not self.odoo_login or not self.odoo_password:
-            raise ConnectorMissingCredentialError("Missing Odoo login/password.")
+        # On vérifie qu’on a bien chargé l’URL, la DB, la clé
+        if not self.odoo_url or not self.odoo_db or not self.odoo_api_key:
+            raise ConnectorMissingCredentialError("Missing Odoo credentials in connector")
 
-        try:
-            self._authenticate()
-        except Exception as e:
-            logger.exception("Odoo validation error.")
-            raise UnexpectedValidationError(f"Failed to authenticate with Odoo: {e}")
-
-        logger.info("Odoo connector settings validated successfully.")
+        logger.info("Odoo connector settings validated.")
 
     # ------------------------------------------------
     # ONYX METHODS
     # ------------------------------------------------
     def load_from_state(self) -> GenerateDocumentsOutput:
-        """
-        Bulk load: fetch all tickets/tasks in a paginated manner.
-        """
-        logger.info("Starting load_from_state (Odoo).")
+        logger.info("Starting load_from_state for Odoo")
         self._authenticate()
 
-        all_docs: List[Document] = []
-        if self.include_tickets:
-            ticket_docs = self._fetch_tickets_paginated()
-            all_docs.extend(ticket_docs)
+        all_docs = []
 
-        if self.include_tasks:
-            task_docs = self._fetch_tasks_paginated()
-            all_docs.extend(task_docs)
+        if self.include_project_module:
+            # on va fetch project tasks
+            docs_project = self._fetch_tasks_paginated()
+            all_docs.extend(docs_project)
+
+        if self.include_helpdesk_module:
+            # on va fetch helpdesk tickets
+            docs_helpdesk = self._fetch_tickets_paginated() 
+            all_docs.extend(docs_helpdesk)
 
         # Onyx-level batching
         for i in range(0, len(all_docs), self.batch_size):
@@ -181,7 +169,7 @@ class OdooConnector(LoadConnector, PollConnector):
             partial_ids = obj.execute_kw(
                 self.odoo_db,
                 self.odoo_uid,
-                self.odoo_password,
+                self.odoo_api_key,
                 "helpdesk.ticket",
                 "search",
                 [domain],
@@ -204,7 +192,7 @@ class OdooConnector(LoadConnector, PollConnector):
             chunk_data = obj.execute_kw(
                 self.odoo_db,
                 self.odoo_uid,
-                self.odoo_password,
+                self.odoo_api_key,
                 "helpdesk.ticket",
                 "read",
                 [chunk_ids],
@@ -257,7 +245,7 @@ class OdooConnector(LoadConnector, PollConnector):
             partial_ids = obj.execute_kw(
                 self.odoo_db,
                 self.odoo_uid,
-                self.odoo_password,
+                self.odoo_api_key,
                 "project.task",
                 "search",
                 [domain],
@@ -279,7 +267,7 @@ class OdooConnector(LoadConnector, PollConnector):
             chunk_data = obj.execute_kw(
                 self.odoo_db,
                 self.odoo_uid,
-                self.odoo_password,
+                self.odoo_api_key,
                 "project.task",
                 "read",
                 [chunk_ids],
@@ -333,7 +321,7 @@ class OdooConnector(LoadConnector, PollConnector):
             chunk_data = obj.execute_kw(
                 self.odoo_db,
                 self.odoo_uid,
-                self.odoo_password,
+                self.odoo_api_key,
                 "mail.message",
                 "read",
                 [chunk_ids],
@@ -367,7 +355,7 @@ class OdooConnector(LoadConnector, PollConnector):
         uid = common_proxy.authenticate(
             self.odoo_db,
             self.odoo_login,
-            self.odoo_password,
+            self.odoo_api_key,
             {}
         )
         if not uid:
@@ -428,7 +416,7 @@ if __name__ == "__main__":
     )
     connector.load_credentials({
         "odoo_login": "user@mycompany.com",
-        "odoo_password": "SUPERSECRET"
+        "odoo_api_key": "SUPERSECRET"
     })
     connector.validate_connector_settings()
 

@@ -390,33 +390,91 @@ export const connectorConfigs: Record<
     values: [],
     advanced_values: [],
   },
-  odoo: {
-    description: "Configure Odoo connector",
-    values: [
-      {
-        type: "text",
-        label: "Odoo Base URL",
-        name: "odoo_base_url",
-        optional: false,
-        query: "Enter the Odoo instance URL (e.g. https://mycompany.odoo.com)",
-      },
-      {
-        type: "text",
-        label: "Odoo Database Name",
-        name: "odoo_db",
-        optional: false,
-        query: "Enter your Odoo database name",
-      },
-      {
-        type: "text",
-        label: "Odoo API Key",
-        name: "odoo_api_key",
-        optional: false,
-        query: "Enter your Odoo API Key",
-      },
-    ],
-    advanced_values: [],
-  },
+    odoo: {
+      description: "Configure which Odoo modules and fields to index",
+      values: [
+        // --- Module Projet ---
+        {
+          type: "checkbox",
+          label: "Include Project Module",
+          name: "include_project_module",
+          default: false,
+        },
+        {
+          type: "checkbox",
+          label: "Include Tasks (Project)",
+          name: "project_include_tasks",
+          default: false,
+          // N'affiche cette case que si "include_project_module" est coché
+          visibleCondition: (values) => !!values.include_project_module,
+        },
+        {
+          type: "checkbox",
+          label: "Include Descriptions (Project)",
+          name: "project_include_descriptions",
+          default: false,
+          visibleCondition: (values) => !!values.include_project_module,
+        },
+        {
+          type: "checkbox",
+          label: "Include Emails (Project)",
+          name: "project_include_emails",
+          default: false,
+          visibleCondition: (values) => !!values.include_project_module,
+        },
+        {
+          type: "checkbox",
+          label: "Include Internal Notes (Project)",
+          name: "project_include_notes",
+          default: false,
+          visibleCondition: (values) => !!values.include_project_module,
+        },
+        // --- Module Helpdesk ---
+        {
+          type: "checkbox",
+          label: "Include Helpdesk Module",
+          name: "include_helpdesk_module",
+          default: false,
+        },
+        {
+          type: "checkbox",
+          label: "Include Tasks (Helpdesk)",
+          name: "helpdesk_include_tasks",
+          default: false,
+          visibleCondition: (values) => !!values.include_helpdesk_module,
+        },
+        {
+          type: "checkbox",
+          label: "Include Descriptions (Helpdesk)",
+          name: "helpdesk_include_descriptions",
+          default: false,
+          visibleCondition: (values) => !!values.include_helpdesk_module,
+        },
+        {
+          type: "checkbox",
+          label: "Include Emails (Helpdesk)",
+          name: "helpdesk_include_emails",
+          default: false,
+          visibleCondition: (values) => !!values.include_helpdesk_module,
+        },
+        {
+          type: "checkbox",
+          label: "Include Internal Notes (Helpdesk)",
+          name: "helpdesk_include_notes",
+          default: false,
+          visibleCondition: (values) => !!values.include_helpdesk_module,
+        },
+        // Exemple de pagination paramétrable
+        {
+          type: "number",
+          label: "Odoo Page Size",
+          name: "odoo_page_size",
+          default: 100,
+          optional: true,
+        },
+      ],
+      advanced_values: [],
+    },  
   confluence: {
     description: "Configure Confluence connector",
     initialConnectorName: "cloud_name",
