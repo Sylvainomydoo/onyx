@@ -1,0 +1,8 @@
+# Fichiers Docker
+data/
+.env
+*.env.*
+
+# Fichiers système
+.DS_Store
+.idea/
