@@ -22,7 +22,7 @@ WORKDIR /app
 ARG NODE_OPTIONS
 
 # pull in source code / package.json / package-lock.json
-COPY onyx/web/. .
+COPY ./onyx/web/. .
 RUN find /app -type f | sort
 
 # Copy Custom Odoo files
